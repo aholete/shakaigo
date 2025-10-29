@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎓 頻出単語リスト</title>
+    <title>社会語シグナル</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; background-color: #f4f7f9; color: #333; }
         h1 { text-align: center; color: #1e3a8a; margin-bottom: 30px; }
@@ -40,7 +40,7 @@
     </style>
 </head>
 <body>
-    <h1>🎓 頻出単語リスト</h1>
+    <h1>🎓 社会語シグナル</h1>
 
     <div class="controls">
         <input type="text" id="searchInput" placeholder="単語、大学、科目、年で検索..." aria-label="検索">
@@ -421,7 +421,7 @@
             {university: "北海道大学", subject: "倫理,公共", word: "ヒューマニスト", year: 2023},
             {university: "北海道大学", subject: "倫理,公共", word: "モンテーニュ", year: 2023},
             {university: "北海道大学", subject: "倫理", word: "良識", year: 2023},
-            {university: "北海道大学", subject: "倫理,公共", word: "寛容", year:2023 },
+            {university: "北海道大学", subject: "寛容", year:2023 },
             {university: "北海道大学", subject: "世界史,日本史,政経,倫理,公共,歴史,地理", word: "民主主義", year: 2023},
             {university: "北海道大学", subject: "世界史", word: "中世のキリスト教文明", year: 2023},
             {university: "北海道大学", subject: "世界史,政経,歴史", word: "フランス革命", year: 2023},
@@ -444,6 +444,11 @@
         // データの準備とフィルタオプションの生成
         function initialize() {
             populateFilters(wordsData);
+            
+            // ★★★ 修正点: フィルタの初期値を「全て」に設定 ★★★
+            universityFilter.value = '全て';
+            subjectFilter.value = '全て';
+
             applyFilters();
             
             // イベントリスナーの設定
@@ -467,6 +472,8 @@
             });
 
             // 大学フィルタの生成
+            // 既存のオプションをクリア
+            universityFilter.innerHTML = '';
             Array.from(universities).sort().forEach(uni => {
                 const option = document.createElement('option');
                 option.value = uni;
@@ -475,6 +482,8 @@
             });
             
             // 科目フィルタの生成
+            // 既存のオプションをクリア
+            subjectFilter.innerHTML = '';
             Array.from(subjects).sort().forEach(sub => {
                 const option = document.createElement('option');
                 option.value = sub;
