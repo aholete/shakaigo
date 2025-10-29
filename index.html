@@ -40,7 +40,7 @@
     </style>
 </head>
 <body>
-    <h1>🎓 社会語シグナル</h1>
+    <h1>社会語シグナル</h1>
 
     <div class="controls">
         <input type="text" id="searchInput" placeholder="単語、大学、科目、年で検索..." aria-label="検索">
@@ -421,7 +421,7 @@
             {university: "北海道大学", subject: "倫理,公共", word: "ヒューマニスト", year: 2023},
             {university: "北海道大学", subject: "倫理,公共", word: "モンテーニュ", year: 2023},
             {university: "北海道大学", subject: "倫理", word: "良識", year: 2023},
-            {university: "北海道大学", subject: "寛容", year:2023 },
+            {university: "北海道大学", subject: "倫理,公共", word: "寛容", year:2023 },
             {university: "北海道大学", subject: "世界史,日本史,政経,倫理,公共,歴史,地理", word: "民主主義", year: 2023},
             {university: "北海道大学", subject: "世界史", word: "中世のキリスト教文明", year: 2023},
             {university: "北海道大学", subject: "世界史,政経,歴史", word: "フランス革命", year: 2023},
@@ -445,7 +445,7 @@
         function initialize() {
             populateFilters(wordsData);
             
-            // ★★★ 修正点: フィルタの初期値を「全て」に設定 ★★★
+            // フィルタの初期値を「全て」に設定
             universityFilter.value = '全て';
             subjectFilter.value = '全て';
 
@@ -470,11 +470,18 @@
                     if (trimmedSub) subjects.add(trimmedSub);
                 });
             });
+            
+            // セットから配列に変換し、ソート
+            let sortedUniversities = Array.from(universities).filter(u => u !== '全て').sort();
+            let sortedSubjects = Array.from(subjects).filter(s => s !== '全て').sort();
+
+            // ★★★ 修正点: 「全て」をソートされたリストの先頭に追加 ★★★
+            sortedUniversities.unshift('全て');
+            sortedSubjects.unshift('全て');
 
             // 大学フィルタの生成
-            // 既存のオプションをクリア
-            universityFilter.innerHTML = '';
-            Array.from(universities).sort().forEach(uni => {
+            universityFilter.innerHTML = ''; // 既存のオプションをクリア
+            sortedUniversities.forEach(uni => {
                 const option = document.createElement('option');
                 option.value = uni;
                 option.textContent = uni;
@@ -482,9 +489,8 @@
             });
             
             // 科目フィルタの生成
-            // 既存のオプションをクリア
-            subjectFilter.innerHTML = '';
-            Array.from(subjects).sort().forEach(sub => {
+            subjectFilter.innerHTML = ''; // 既存のオプションをクリア
+            sortedSubjects.forEach(sub => {
                 const option = document.createElement('option');
                 option.value = sub;
                 option.textContent = sub;
