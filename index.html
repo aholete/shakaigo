@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 頻出単語リスト</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; background-color: #f4f7f9; color: #333; }
+        h1 { text-align: center; color: #1e3a8a; margin-bottom: 30px; }
+        .controls { margin-bottom: 25px; display: flex; gap: 10px; flex-wrap: wrap; background-color: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        input, select { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; flex: 1; min-width: 120px; font-size: 16px; background-color: #f9fafb; transition: border-color 0.3s; }
+        input:focus, select:focus { border-color: #3b82f6; outline: none; }
+        #wordList { list-style: none; padding: 0; }
+        #wordList li { 
+            background-color: #ffffff; 
+            padding: 15px 20px; 
+            margin-bottom: 12px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #3b82f6;
+        }
+        .word { font-weight: 700; font-size: 1.3em; color: #1e3a8a; }
+        .details { font-size: 0.9em; color: #6b7280; margin-top: 5px; display: flex; align-items: center; flex-wrap: wrap; }
+        .subject-tag { 
+            display: inline-block; 
+            background: #e0f2fe; 
+            color: #2563eb; 
+            padding: 4px 8px; 
+            margin-right: 8px; 
+            margin-top: 4px;
+            border-radius: 4px; 
+            font-size: 0.85em; 
+        }
+        .meta-info { margin-right: 15px; }
+        #resultCount { text-align: right; margin-bottom: 15px; font-weight: 600; color: #4b5563; }
+        @media (max-width: 600px) {
+            .controls { flex-direction: column; }
+            input, select { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎓 頻出単語リスト</h1>
+
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="単語、大学、科目、年で検索..." aria-label="検索">
+        <select id="universityFilter" aria-label="大学でフィルタ"></select>
+        <select id="subjectFilter" aria-label="科目でフィルタ"></select>
+    </div>
+
+    <p id="resultCount">結果を読み込み中...</p>
+    
+    <ul id="wordList">
+        </ul>
+    
+    <script>
+        // SwiftのWordEntry構造体をJavaScriptのオブジェクトとして定義
+        // データはコード内に直接埋め込むことで、JSONファイルの別途用意を不要にしています。
+        const wordsData = [
+            {university: "東北大学", subject: "世界史,日本史,歴史", word: "近代化", year: 2007},
+            {university: "東北大学", subject: "世界史,日本史,政経", word: "封建的", year: 2007},
+            {university: "東北大学", subject: "世界史", word: "くびき", year: 2007},
+            {university: "東北大学", subject: "世界史,日本史", word: "血縁", year: 2007},
+            {university: "東北大学", subject: "世界史,日本史", word: "地縁", year: 2007},
+            {university: "東北大学", subject: "政経,倫理", word: "核家族", year: 2007},
+            {university: "東北大学", subject: "政経,倫理,公共", word: "メディア", year: 2007},
+            {university: "東北大学", subject: "政経,公共", word: "言論の自由", year: 2007},
+            {university: "東北大学", subject: "政経,公共", word: "職業の自由", year: 2007},
+            {university: "東北大学", subject: "政経,公共", word: "婚姻の自由", year: 2007},
+            {university: "東北大学", subject: "日本史", word: "絵巻物", year: 2008},
+            {university: "東北大学", subject: "日本史", word: "枕草子", year: 2008},
+            {university: "東北大学", subject: "日本史", word: "玉勝間", year: 2008},
+            {university: "東北大学", subject: "政経", word: "バブル経済", year: 2008},
+            {university: "東北大学", subject: "世界史,日本史,政経", word: "不良債権", year: 2008},
+            {university: "東北大学", subject: "日本史", word: "ムラとクニ", year: 2008},
+            {university: "東北大学", subject: "日本史,倫理", word: "古事記", year: 2008},
+            {university: "東北大学", subject: "日本史,倫理", word: "本居宣長", year: 2008},
+            {university: "東北大学", subject: "日本史", word: "藩", year: 2008},
+            {university: "東北大学", subject: "政経,倫理", word: "中産階級", year: 2008},
+            {university: "東北大学", subject: "倫理,公共", word: "アイデンティティ", year: 2008},
+            {university: "東北大学", subject: "政経,倫理,公共", word: "ジェンダー", year: 2008},
+            {university: "東北大学", subject: "政経,公共", word: "分配", year: 2009},
+            {university: "東北大学", subject: "世界史", word: "宥和", year: 2009},
+            {university: "東北大学", subject: "世界史,倫理", word: "心身二元論", year: 2010},
+            {university: "東北大学", subject: "倫理,公共", word: "フロイト", year: 2010},
+            {university: "東北大学", subject: "倫理,公共", word: "防衛機制", year: 2010},
+            {university: "東北大学", subject: "倫理,公共", word: "葛藤", year: 2010},
+            {university: "東北大学", subject: "倫理,公共", word: "自我", year: 2010},
+            {university: "東北大学", subject: "倫理,公共", word: "現象学", year: 2010},
+            {university: "東北大学", subject: "倫理,公共", word: "メルロ=ポンティ", year: 2010},
+            {university: "東北大学", subject: "世界史,日本史,政経", word: "恐慌", year: 2011},
+            {university: "東北大学", subject: "政経", word: "コスト", year: 2011},
+            {university: "東北大学", subject: "世界史", word: "ヘロドトス", year: 2012},
+            {university: "東北大学", subject: "世界史,倫理,公共", word: "カント", year: 2012},
+            {university: "東北大学", subject: "倫理", word: "ヴィトゲンシュタイン", year: 2012},
+            {university: "東北大学", subject: "日本史,倫理", word: "松尾芭蕉", year: 2012},
+            {university: "東北大学", subject: "日本史,倫理", word: "西田幾多郎", year: 2012},
+            {university: "東北大学", subject: "政経,倫理", word: "イデオロギー", year: 2012},
+            {university: "東北大学", subject: "日本史,政経", word: "靖国神社", year: 2012},
+            {university: "東北大学", subject: "政経,地理,公共", word: "領土問題", year: 2012},
+            {university: "東北大学", subject: "世界史,日本史,政経,倫理,歴史", word: "産業革命", year: 2012},
+            {university: "東北大学", subject: "世界史,日本史,歴史", word: "史料", year: 2012},
+            {university: "東北大学", subject: "世界史,日本史,倫理,公共", word: "哲学", year: 2012},
+            {university: "東北大学", subject: "世界史,日本史,政経,倫理,公共,地理", word: "公害", year: 2013},
+            {university: "東北大学", subject: "政経,地理", word: "先進国", year: 2013},
+            {university: "東北大学", subject: "世界史,政経,倫理,公共", word: "合理主義", year: 2013},
+            {university: "東北大学", subject: "倫理", word: "理性", year: 2013},
+            {university: "東北大学", subject: "世界史,日本史,政経,倫理,地理,公共,歴史", word: "資本・資本主義", year: 2013},
+            {university: "東北大学", subject: "世界史,地理", word: "ラテン語", year: 2014},
+            {university: "東北大学", subject: "世界史,日本史,政経", word: "極東", year: 2014},
+            {university: "東北大学", subject: "世界史,政経", word: "経済学", year: 2014},
+            {university: "東北大学", subject: "倫理", word: "社会学", year: 2014},
+            {university: "東北大学", subject: "世界史,日本史,政経,倫理,地理", word: "労働者", year: 2014},
+            {university: "東北大学", subject: "倫理", word: "転回", year: 2014},
+            {university: "東北大学", subject: "倫理", word: "表象", year: 2015},
+            {university: "東北大学", subject: "政経,倫理", word: "貨幣", year: 2016},
+            {university: "東北大学", subject: "政経", word: "市場経済", year: 2016},
+            {university: "東北大学", subject: "政経,倫理", word: "商品化", year: 2016},
+            {university: "東北大学", subject: "世界史,政経,倫理", word: "マルクス", year: 2016},
+            {university: "東北大学", subject: "世界史,政経,倫理,歴史,公共", word: "フランス革命", year: 2016},
+            {university: "東北大学", subject: "世界史", word: "キュビズム", year: 2017},
+            {university: "東北大学", subject: "世界史,日本史", word: "写実的", year: 2017},
+            {university: "東北大学", subject: "世界史", word: "ラスコー", year: 2017},
+            {university: "東北大学", subject: "世界史", word: "アルタミラ", year: 2017},
+            {university: "東北大学", subject: "日本史", word: "風土記", year: 2019},
+            {university: "東北大学", subject: "公共", word: "フィールドワーク", year: 2019},
+            {university: "東北大学", subject: "倫理", word: "規範性", year: 2020},
+            {university: "東北大学", subject: "政経,倫理,公共", word: "利己心", year: 2020},
+            {university: "東北大学", subject: "世界史", word: "吟遊詩人", year: 2021},
+            {university: "東北大学", subject: "日本史", word: "連歌", year: 2021},
+            {university: "東北大学", subject: "世界史,政経,倫理,公共", word: "ルソー", year: 2021},
+            {university: "東北大学", subject: "世界史", word: "ソロン", year: 2021},
+            {university: "東北大学", subject: "倫理", word: "科学的合理性", year: 2022},
+            {university: "東北大学", subject: "政経", word: "インセンティブ", year: 2023},
+            {university: "東北大学", subject: "歴史", word: "国民国家", year: 2024},
+            {university: "東北大学", subject: "世界史,政経", word: "産業資本", year: 2024},
+            {university: "東北大学", subject: "世界史,政経", word: "独占資本", year: 2024},
+            {university: "東北大学", subject: "政経,倫理,公共", word: "社会契約論", year: 2024},
+            {university: "東北大学", subject: "世界史,日本史,政経,倫理,公共", word: "全体主義", year: 2024},
+            {university: "東北大学", subject: "倫理", word: "普遍", year: 2025},
+            {university: "東北大学", subject: "世界史,政経,倫理,公共", word: "プラトン", year: 2024},
+            {university: "東北大学", subject: "世界史,倫理,公共", word: "マキャヴェリ", year: 2024},
+            {university: "東北大学", subject: "倫理,公共", word: "AIブーム", year: 2025},
+            {university: "東北大学", subject: "倫理,公共", word: "エキスパートシステム", year: 2025},
+            {university: "東北大学", subject: "倫理,公共", word: "ディープラーニング", year: 2025},
+            {university: "東北大学", subject: "倫理,公共", word: "EUのAI規制案", year: 2025},
+            {university: "東北大学", subject: "倫理", word: "インタラクション", year: 2025},
+            {university: "東京大学", subject: "政経,公共", word: "包摂", year: 2007},
+            {university: "東京大学", subject: "世界史,日本史,歴史", word: "近代", year: 2007},
+            {university: "東京大学", subject: "世界史,倫理,公共", word: "プラトン", year: 2007},
+            {university: "東京大学", subject: "世界史,倫理,公共", word: "ヘーゲル", year: 2007},
+            {university: "東京大学", subject: "倫理,公共", word: "ドイツ観念論", year: 2007},
+            {university: "東京大学", subject: "世界史", word: "粘土板", year: 2008},
+            {university: "東京大学", subject: "世界史,歴史", word: "ナポレオン", year: 2008},
+            {university: "東京大学", subject: "倫理", word: "神話的世界観", year: 2008},
+            {university: "東京大学", subject: "倫理,公共", word: "アイデンティティ", year: 2008},
+            {university: "東京大学", subject: "世界史,日本史,歴史", word: "史料", year: 2008},
+            {university: "東京大学", subject: "倫理,公共", word: "タブラ=ラサ", year: 2009},
+            {university: "東京大学", subject: "日本史", word: "徒然草", year: 2009},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "プライバシー", year: 2010},
+            {university: "東京大学", subject: "倫理,公共", word: "アイデンティティ", year: 2010},
+            {university: "東京大学", subject: "政経,倫理", word: "イデオロギー", year: 2010},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "情報化", year: 2010},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "人格", year: 2010},
+            {university: "東京大学", subject: "世界史,倫理", word: "ガリレイ", year: 2012},
+            {university: "東京大学", subject: "世界史,倫理,", word: "デカルト", year: 2012},
+            {university: "東京大学", subject: "世界史", word: "ニュートン", year: 2012},
+            {university: "東京大学", subject: "倫理", word: "機械論的自然観", year: 2012},
+            {university: "東京大学", subject: "倫理", word: "目的論的自然観", year: 2012},
+            {university: "東京大学", subject: "世界史,倫理", word: "物心二元論", year: 2012},
+            {university: "東京大学", subject: "倫理", word: "表象", year: 2012},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "人権", year: 2012},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "マイノリティ", year: 2012},
+            {university: "東京大学", subject: "世界史", word: "周辺化", year: 2012},
+            {university: "東京大学", subject: "日本史", word: "世阿弥", year: 2014},
+            {university: "東京大学", subject: "倫理,公共", word: "フロイト", year: 2014},
+            {university: "東京大学", subject: "倫理,公共", word: "無意識", year: 2014},
+            {university: "東京大学", subject: "倫理,公共", word: "自我", year: 2014},
+            {university: "東京大学", subject: "倫理,公共", word: "超自我", year: 2014},
+            {university: "東京大学", subject: "倫理,公共", word: "エス", year: 2014},
+            {university: "東京大学", subject: "倫理,公共", word: "ナラティブ", year: 2014},
+            {university: "東京大学", subject: "世界史,政経,倫理,公共", word: "ソクラテス", year: 2015},
+            {university: "東京大学", subject: "世界史,倫理,公共", word: "問答法", year: 2015},
+            {university: "東京大学", subject: "倫理", word: "人工授精", year: 2017},
+            {university: "東京大学", subject: "倫理", word: "体外受精", year: 2017},
+            {university: "東京大学", subject: "倫理,公共", word: "延命措置の問題", year: 2017},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "マスコミ", year: 2017},
+            {university: "東京大学", subject: "政経,倫理,公共,地理", word: "化石燃料", year: 2017},
+            {university: "東京大学", subject: "政経,公共", word: "公聴会", year: 2017},
+            {university: "東京大学", subject: "倫理,", word: "想起", year: 2018},
+            {university: "東京大学", subject: "倫理", word: "実在", year: 2018},
+            {university: "東京大学", subject: "世界史,倫理", word: "実証主義", year: 2018},
+            {university: "東京大学", subject: "倫理", word: "ポパー", year: 2018},
+            {university: "東京大学", subject: "世界史,政経,歴史", word: "フランス革命", year: 2018},
+            {university: "東京大学", subject: "日本史,倫理,歴史", word: "明治維新", year: 2018},
+            {university: "東京大学", subject: "地理", word: "メガロポリス", year: 2019},
+            {university: "東京大学", subject: "世界史,政経,倫理", word: "ユートピア", year: 2019},
+            {university: "東京大学", subject: "政経,倫理", word: "機会均等", year: 2020},
+            {university: "東京大学", subject: "政経,倫理", word: "自由競争", year: 2020},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "アファーマティブ・アクション", year: 2020},
+            {university: "東京大学", subject: "世界史,日本史,政経", word: "封建制度", year: 2020},
+            {university: "東京大学", subject: "世界史,倫理", word: "カースト制度", year: 2020},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "民主主義", year: 2020},
+            {university: "東京大学", subject: "世界史", word: "ヒエラルキー", year: 2020},
+            {university: "東京大学", subject: "世界史,政経,倫理", word: "マックス・ウェーバー", year: 2020},
+            {university: "東京大学", subject: "世界史,政経,歴史", word: "市民権", year: 2021},
+            {university: "東京大学", subject: "政経,倫理", word: "私的所有", year: 2021},
+            {university: "東京大学", subject: "政経,倫理", word: "社会的所有", year: 2021},
+            {university: "東京大学", subject: "政経", word: "再分配", year: 2021},
+            {university: "東京大学", subject: "政経,公共", word: "社会保障制度", year: 2021},
+            {university: "東京大学", subject: "政経,公共", word: "福祉国家", year: 2021},
+            {university: "東京大学", subject: "歴史", word: "国民国家", year: 2021},
+            {university: "東京大学", subject: "政経,公共", word: "公共性", year: 2021},
+            {university: "東京大学", subject: "倫理", word: "個人主義", year: 2021},
+            {university: "東京大学", subject: "政経,倫理,公共", word: "インフォームド・コンセント", year: 2021},
+            {university: "東京大学", subject: "世界史,日本史,政経,歴史", word: "ナショナリズム", year: 2022},
+            {university: "東京大学", subject: "政経,公共", word: "国籍法", year: 2022},
+            {university: "東京大学", subject: "地理", word: "オセアニア", year: 2023},
+            {university: "東京大学", subject: "地理", word: "メラネシア", year: 2023},
+            {university: "東京大学", subject: "倫理", word: "ディオニソス", year: 2023},
+            {university: "東京大学", subject: "日本史", word: "能", year: 2023},
+            {university: "東京大学", subject: "日本史", word: "狂言", year: 2023},
+            {university: "東京大学", subject: "日本史,倫理", word: "和辻哲郎", year: 2023},
+            {university: "東京大学", subject: "世界史,日本史", word: "行商人", year: 2024},
+            {university: "東京大学", subject: "政経", word: "電子マネー", year: 2024},
+            {university: "東京大学", subject: "倫理", word: "合理性", year: 2024},
+            {university: "東京大学", subject: "政経", word: "信用", year: 2024},
+            {university: "東京大学", subject: "政経", word: "負債", year: 2024},
+            {university: "東京大学", subject: "政経", word: "市場取引", year: 2024},
+            {university: "東京大学", subject: "政経,公共", word: "コミュニズム", year: 2024},
+            {university: "東京大学", subject: "倫理", word: "メルロ=ポンティ", year: 2024},
+            {university: "一橋大学", subject: "政経,公共", word: "公約", year: 2007},
+            {university: "一橋大学", subject: "倫理", word: "表象", year: 2007},
+            {university: "一橋大学", subject: "政経,倫理,公共", word: "メディア", year: 2007},
+            {university: "一橋大学", subject: "政経,公共", word: "国際化", year: 2007},
+            {university: "一橋大学", subject: "世界史,政経,公共,歴史", word: "ペレストロイカ", year: 2007},
+            {university: "一橋大学", subject: "世界史,政経,公共,歴史", word: "ソ連崩壊", year: 2007},
+            {university: "一橋大学", subject: "世界史,日本史,政経,倫理,公共", word: "全体主義", year: 2007},
+            {university: "一橋大学", subject: "世界史,日本史,政経,倫理,公共,歴史", word: "西側(諸国)", year: 2007},
+            {university: "一橋大学", subject: "政経,公共", word: "検閲", year: 2007},
+            {university: "一橋大学", subject: "政経,倫理", word: "イデオロギー", year: 2007},
+            {university: "一橋大学", subject: "世界史", word: "トルストイ", year: 2007},
+            {university: "一橋大学", subject: "世界史", word: "ドストエフスキー", year: 2007},
+            {university: "一橋大学", subject: "政経,倫理,公共", word: "共同体", year: 2007},
+            {university: "一橋大学", subject: "政経,倫理,公共", word: "情報化", year: 2007},
+            {university: "一橋大学", subject: "世界史,政経,倫理,公共,歴史", word: "ブルジョア", year: 2008},
+            {university: "一橋大学", subject: "世界史,日本史,政経,倫理,公共,歴史", word: "デモクラシー", year: 2008},
+            {university: "一橋大学", subject: "世界史", word: "ギリシアのデモクラシー", year: 2008},
+            {university: "一橋大学", subject: "倫理,公共", word: "ドクサ", year: 2008},
+            {university: "一橋大学", subject: "倫理,公共", word: "ミュトス", year: 2008},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "プラトン", year: 2008},
+            {university: "一橋大学", subject: "世界史,日本史,政経,倫理,公共,地理", word: "資本制", year: 2008},
+            {university: "一橋大学", subject: "政経,公共", word: "ブライス", year: 2008},
+            {university: "一橋大学", subject: "世界史,政経,公共", word: "共和制", year: 2008},
+            {university: "一橋大学", subject: "政経,公共", word: "議会政治", year: 2008},
+            {university: "一橋大学", subject: "政経,公共", word: "陪審官", year: 2008},
+            {university: "一橋大学", subject: "世界史,政経,倫理,公共", word: "アリストテレス", year: 2008},
+            {university: "一橋大学", subject: "倫理,公共", word: "『野生の思考』", year: 2008},
+            {university: "一橋大学", subject: "日本史,倫理", word: "アニミズム", year: 2008},
+            {university: "一橋大学", subject: "世界史", word: "ラテン語", year: 2009},
+            {university: "一橋大学", subject: "政経,倫理", word: "二元性", year: 2009},
+            {university: "一橋大学", subject: "倫理,公共", word: "主格未分", year: 2009},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "老子", year: 2009},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "ゲーテ", year: 2009},
+            {university: "一橋大学", subject: "倫理", word: "マリア", year: 2009},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "プラトン", year: 2009},
+            {university: "一橋大学", subject: "世界史,政経,倫理,公共", word: "ソクラテス", year: 2009},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "ギリシア神話", year: 2009},
+            {university: "一橋大学", subject: "政経,公共", word: "大衆迎合", year: 2009},
+            {university: "一橋大学", subject: "政経,公共,地理", word: "開発途上国", year: 2009},
+            {university: "一橋大学", subject: "政経,公共", word: "大衆民主主義", year: 2009},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "問答法", year: 2009},
+            {university: "一橋大学", subject: "世界史,日本史,歴史", word: "ヒットラー", year: 2009},
+            {university: "一橋大学", subject: "世界史,倫理,地理", word: "ムスリム", year: 2010},
+            {university: "一橋大学", subject: "世界史,倫理", word: "コーラン", year: 2010},
+            {university: "一橋大学", subject: "倫理", word: "ハーディス", year: 2010},
+            {university: "一橋大学", subject: "倫理", word: "文化相対主義", year: 2010},
+            {university: "一橋大学", subject: "倫理", word: "自文化中心主義", year: 2010},
+            {university: "一橋大学", subject: "政経,公共", word: "アメリカの覇権主義", year: 2010},
+            {university: "一橋大学", subject: "日本史", word: "平家物語", year: 2011},
+            {university: "一橋大学", subject: "日本史", word: "保元物語", year: 2011},
+            {university: "一橋大学", subject: "日本史", word: "軍記物", year: 2011},
+            {university: "一橋大学", subject: "日本史", word: "平治の乱", year: 2011},
+            {university: "一橋大学", subject: "日本史", word: "源平争乱", year: 2011},
+            {university: "一橋大学", subject: "日本史", word: "源氏物語", year: 2011},
+            {university: "一橋大学", subject: "倫理", word: "パーソナリティ", year: 2011},
+            {university: "一橋大学", subject: "倫理,公共", word: "デューイ", year: 2011},
+            {university: "一橋大学", subject: "倫理,公共", word: "ジェームズ", year: 2011},
+            {university: "一橋大学", subject: "倫理,公共", word: "プラグマティズム", year: 2011},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "アリストテレス", year: 2011},
+            {university: "一橋大学", subject: "世界史,政経,公共", word: "グロチウス", year: 2011},
+            {university: "一橋大学", subject: "日本史,倫理", word: "佐久間象山", year: 2012},
+            {university: "一橋大学", subject: "日本史,倫理,歴史", word: "攘夷", year: 2012},
+            {university: "一橋大学", subject: "世界史", word: "夷狄", year: 2012},
+            {university: "一橋大学", subject: "世界史,倫理", word: "マキャヴェリ", year: 2012},
+            {university: "一橋大学", subject: "世界史,倫理", word: "ルネサンス", year: 2012},
+            {university: "一橋大学", subject: "政経,公共", word: "イノベーション", year: 2012},
+            {university: "一橋大学", subject: "倫理,公共", word: "サルトル", year: 2012},
+            {university: "一橋大学", subject: "世界史", word: "カミュ", year: 2012},
+            {university: "一橋大学", subject: "倫理,公共", word: "レヴィ=ストロース", year: 2012},
+            {university: "一橋大学", subject: "倫理,公共", word: "フーコー", year: 2012},
+            {university: "一橋大学", subject: "世界史,倫理", word: "ヘブライ語", year: 2012},
+            {university: "一橋大学", subject: "世界史", word: "アラム語", year: 2012},
+            {university: "一橋大学", subject: "世界史", word: "コイネー", year: 2012},
+            {university: "一橋大学", subject: "世界史,日本史,政経,公共,歴史", word: "東西冷戦", year: 2012},
+            {university: "一橋大学", subject: "世界史", word: "ドストエフスキー", year: 2012},
+            {university: "一橋大学", subject: "世界史,政経,公共", word: "東欧革命", year: 2013},
+            {university: "一橋大学", subject: "世界史,日本史,政経,公共", word: "ソ連崩壊", year: 2013},
+            {university: "一橋大学", subject: "世界史,政経,公共,歴史", word: "東西ドイツの統一", year: 2013},
+            {university: "一橋大学", subject: "世界史,政経,公共,歴史", word: "鉄のカーテン", year: 2013},
+            {university: "一橋大学", subject: "世界史,政経,歴史,地理", word: "バルト三国", year: 2013},
+            {university: "一橋大学", subject: "世界史,政経,公共,歴史,地理", word: "旧ユーゴスラビア", year: 2013},
+            {university: "一橋大学", subject: "政経,公共", word: "実定法", year: 2013},
+            {university: "一橋大学", subject: "政経,倫理,公共", word: "市場経済", year: 2013},
+            {university: "一橋大学", subject: "政経,倫理", word: "イデオロギー", year: 2014},
+            {university: "一橋大学", subject: "世界史,政経,倫理,公共", word: "カント", year: 2014},
+            {university: "一橋大学", subject: "倫理", word: "ソシュール", year: 2015},
+            {university: "一橋大学", subject: "政経,倫理,公共", word: "メディア", year: 2016},
+            {university: "一橋大学", subject: "政経,公共,歴史", word: "高度経済成長期の負の側面", year: 2016},
+            {university: "一橋大学", subject: "日本史,政経,公共", word: "公害問題", year: 2016},
+            {university: "一橋大学", subject: "世界史,日本史,政経,公共,歴史", word: "石油危機", year: 2016},
+            {university: "一橋大学", subject: "政経,公共", word: "ドル危機", year: 2016},
+            {university: "一橋大学", subject: "世界史", word: "コミューン", year: 2016},
+            {university: "一橋大学", subject: "世界史,歴史", word: "ヒッピー文化", year: 2016},
+            {university: "一橋大学", subject: "日本史,政経,公共,歴史", word: "バブル経済", year: 2016},
+            {university: "一橋大学", subject: "世界史,日本史,政経,倫理,公共,歴史", word: "資本主義", year: 2016},
+            {university: "一橋大学", subject: "倫理,公共", word: "現象学", year: 2016},
+            {university: "一橋大学", subject: "倫理,公共", word: "世界-内-存在", year: 2016},
+            {university: "一橋大学", subject: "倫理,公共", word: "メルロ=ポンティ", year: 2016},
+            {university: "一橋大学", subject: "倫理,公共", word: "人格", year: 2017},
+            {university: "一橋大学", subject: "日本史,倫理", word: "歎異抄", year: 2017},
+            {university: "一橋大学", subject: "倫理,公共", word: "カント", year: 2017},
+            {university: "一橋大学", subject: "倫理,公共", word: "ロールズ", year: 2017},
+            {university: "一橋大学", subject: "倫理,公共", word: "功利主義", year: 2017},
+            {university: "一橋大学", subject: "倫理,公共", word: "無知のヴェール", year: 2017},
+            {university: "一橋大学", subject: "倫理,公共", word: "アイデンティティ", year: 2017},
+            {university: "一橋大学", subject: "倫理,公共", word: "ハイデガー", year: 2017},
+            {university: "一橋大学", subject: "世界史,日本史,歴史", word: "近代化", year: 2018},
+            {university: "一橋大学", subject: "政経,倫理,公共,地理", word: "地球温暖化", year: 2018},
+            {university: "一橋大学", subject: "政経,公共", word: "創造的破壊", year: 2018},
+            {university: "一橋大学", subject: "政経,公共", word: "排出量取引", year: 2018},
+            {university: "一橋大学", subject: "政経", word: "緑の革命", year: 2018},
+            {university: "一橋大学", subject: "世界史,政経", word: "第三世界", year: 2018},
+            {university: "一橋大学", subject: "政経,地理", word: "集約的農業", year: 2018},
+            {university: "一橋大学", subject: "政経,公共", word: "私的財産", year: 2018},
+            {university: "一橋大学", subject: "日本史,歴史", word: "日露戦争", year: 2018},
+            {university: "一橋大学", subject: "日本史,歴史", word: "日清戦争", year: 2018},
+            {university: "一橋大学", subject: "日本史,歴史", word: "民権", year: 2018},
+            {university: "一橋大学", subject: "日本史,倫理,歴史", word: "国民主義", year: 2018},
+            {university: "一橋大学", subject: "日本史,歴史", word: "国権", year: 2018},
+            {university: "一橋大学", subject: "日本史,歴史", word: "国家主義", year: 2018},
+            {university: "一橋大学", subject: "日本史,歴史", word: "藩閥専制", year: 2018},
+            {university: "一橋大学", subject: "世界史,日本史,歴史", word: "列強", year: 2018},
+            {university: "一橋大学", subject: "世界史", word: "ラテン語", year: 2019},
+            {university: "一橋大学", subject: "倫理,公共", word: "ニヒリズム", year: 2019},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "ヒューマニズム", year: 2019},
+            {university: "一橋大学", subject: "倫理", word: "ベルクソン", year: 2019},
+            {university: "一橋大学", subject: "世界史", word: "ダーウィン", year: 2019},
+            {university: "一橋大学", subject: "政経,公共", word: "学問の自由", year: 2019},
+            {university: "一橋大学", subject: "政経", word: "企業家", year: 2019},
+            {university: "一橋大学", subject: "政経", word: "ストライキ", year: 2019},
+            {university: "一橋大学", subject: "政経", word: "ボイコット", year: 2019},
+            {university: "一橋大学", subject: "世界史,歴史", word: "苦力", year: 2019},
+            {university: "一橋大学", subject: "政経,公共", word: "言論の自由", year: 2019},
+            {university: "一橋大学", subject: "政経,公共", word: "私企業", year: 2019},
+            {university: "一橋大学", subject: "政経,公共", word: "労働法", year: 2019},
+            {university: "一橋大学", subject: "政経,公共", word: "効用", year: 2019},
+            {university: "一橋大学", subject: "倫理", word: "神話", year: 2019},
+            {university: "一橋大学", subject: "世界史,日本史,政経,公共", word: "技術革新", year: 2019},
+            {university: "一橋大学", subject: "政経,公共", word: "雇用者", year: 2020},
+            {university: "一橋大学", subject: "倫理", word: "未開文化集団", year: 2021},
+            {university: "一橋大学", subject: "世界史,歴史", word: "列強の植民地帝国", year: 2021},
+            {university: "一橋大学", subject: "倫理,公共", word: "構造主義", year: 2021},
+            {university: "一橋大学", subject: "倫理,公共", word: "レヴィ=ストロース", year: 2021},
+            {university: "一橋大学", subject: "世界史,倫理", word: "文明社会", year: 2021},
+            {university: "一橋大学", subject: "倫理", word: "神話", year: 2021},
+            {university: "一橋大学", subject: "世界史", word: "ゲルマン民族", year: 2021},
+            {university: "一橋大学", subject: "歴史", word: "国民国家", year: 2021},
+            {university: "一橋大学", subject: "倫理,公共", word: "アイデンティティ", year: 2021},
+            {university: "一橋大学", subject: "政経,倫理,公共", word: "ジェンダー", year: 2021},
+            {university: "一橋大学", subject: "倫理", word: "物語", year: 2022},
+            {university: "一橋大学", subject: "倫理", word: "バイアス", year: 2022},
+            {university: "一橋大学", subject: "日本史", word: "文禄・慶長の役", year: 2022},
+            {university: "一橋大学", subject: "世界史", word: "進化論", year: 2022},
+            {university: "一橋大学", subject: "世界史", word: "直立二足歩行", year: 2022},
+            {university: "一橋大学", subject: "世界史,倫理", word: "受胎告知", year: 2022},
+            {university: "一橋大学", subject: "世界史,倫理", word: "イエス", year: 2022},
+            {university: "一橋大学", subject: "政経,公共", word: "政治権力", year: 2023},
+            {university: "一橋大学", subject: "政経,公共", word: "スト", year: 2023},
+            {university: "一橋大学", subject: "政経,公共", word: "サボタージュ", year: 2023},
+            {university: "一橋大学", subject: "政経,公共", word: "リコール", year: 2023},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "デモ", year: 2023},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "不買運動", year: 2023},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "ボイコット", year: 2023},
+            {university: "一橋大学", subject: "政経,倫理,公共", word: "マスコミ", year: 2023},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "哲学", year: 2023},
+            {university: "一橋大学", subject: "世界史,政経,公共", word: "人権思想", year: 2024},
+            {university: "一橋大学", subject: "歴史", word: "国民国家", year: 2024},
+            {university: "一橋大学", subject: "世界史,日本史,政経,歴史", word: "ナショナリズム", year: 2024},
+            {university: "一橋大学", subject: "世界史,日本史,歴史", word: "近代国家", year: 2024},
+            {university: "一橋大学", subject: "世界史,日本史,政経,倫理", word: "啓蒙思想", year: 2024},
+            {university: "一橋大学", subject: "世界史,倫理", word: "プロテスタント", year: 2024},
+            {university: "一橋大学", subject: "世界史,政経,倫理,公共", word: "ユダヤ人", year: 2024},
+            {university: "一橋大学", subject: "政経,公共", word: "冤罪", year: 2024},
+            {university: "一橋大学", subject: "世界史,政経,公共", word: "宗教紛争", year: 2024},
+            {university: "一橋大学", subject: "世界史,倫理,公共", word: "ヴォルテール", year: 2024},
+            {university: "北海道大学", subject: "政経,倫理,公共,歴史,地理", word: "情報化", year:2024 },
+            {university: "北海道大学", subject: "政経,倫理,公共,歴史", word: "メディア", year: 2024},
+            {university: "北海道大学", subject: "倫理", word: "表象", year: 2024},
+            {university: "北海道大学", subject: "倫理", word: "知覚", year: 2024},
+            {university: "北海道大学", subject: "倫理", word: "認知", year: 2024},
+            {university: "北海道大学", subject: "政経", word: "効用", year: 2024},
+            {university: "北海道大学", subject: "世界史,政経,倫理", word: "イデオロギー", year: 2024},
+            {university: "北海道大学", subject: "倫理", word: "アポリア", year: 2024},
+            {university: "北海道大学", subject: "世界史", word: "モーツァルト", year:2023 },
+            {university: "北海道大学", subject: "日本史,倫理", word: "穢れ", year: 2023},
+            {university: "北海道大学", subject: "日本史", word: "能", year: 2023},
+            {university: "北海道大学", subject: "世界史,歴史", word: "ネイティブ・アメリカン", year: 2023},
+            {university: "北海道大学", subject: "世界史,倫理", word: "聖書", year: 2023},
+            {university: "北海道大学", subject: "日本史,倫理", word: "祭祀", year: 2023},
+            {university: "北海道大学", subject: "倫理,公共", word: "ヒューマニスト", year: 2023},
+            {university: "北海道大学", subject: "倫理,公共", word: "モンテーニュ", year: 2023},
+            {university: "北海道大学", subject: "倫理", word: "良識", year: 2023},
+            {university: "北海道大学", subject: "倫理,公共", word: "寛容", year:2023 },
+            {university: "北海道大学", subject: "世界史,日本史,政経,倫理,公共,歴史,地理", word: "民主主義", year: 2023},
+            {university: "北海道大学", subject: "世界史", word: "中世のキリスト教文明", year: 2023},
+            {university: "北海道大学", subject: "世界史,政経,歴史", word: "フランス革命", year: 2023},
+            {university: "北海道大学", subject: "世界史,日本史,政経,歴史", word: "ナチ", year: 2023},
+            {university: "北海道大学", subject: "政経,倫理,公共", word: "二元論", year: 2023},
+            {university: "北海道大学", subject: "公共", word: "公正", year: 2023},
+            {university: "北海道大学", subject: "世界史,倫理", word: "モーゼ", year: 2023},
+            {university: "北海道大学", subject: "世界史,倫理", word: "パウロ", year: 2023},
+            {university: "北海道大学", subject: "世界史,倫理", word: "エラスムス", year:2023},
+            {university: "北海道大学", subject: "倫理", word: "情念", year: 2023}
+        ];
+
+        // 要素の取得
+        const searchInput = document.getElementById('searchInput');
+        const universityFilter = document.getElementById('universityFilter');
+        const subjectFilter = document.getElementById('subjectFilter');
+        const wordList = document.getElementById('wordList');
+        const resultCount = document.getElementById('resultCount');
+
+        // データの準備とフィルタオプションの生成
+        function initialize() {
+            populateFilters(wordsData);
+            applyFilters();
+            
+            // イベントリスナーの設定
+            searchInput.addEventListener('input', applyFilters);
+            universityFilter.addEventListener('change', applyFilters);
+            subjectFilter.addEventListener('change', applyFilters);
+        }
+        
+        // フィルタ（プルダウン）のオプションを設定
+        function populateFilters(data) {
+            const universities = new Set(['全て']);
+            const subjects = new Set(['全て']);
+            
+            data.forEach(item => {
+                universities.add(item.university);
+                // カンマ区切りの科目を個別に抽出
+                item.subject.split(',').forEach(sub => {
+                    const trimmedSub = sub.trim();
+                    if (trimmedSub) subjects.add(trimmedSub);
+                });
+            });
+
+            // 大学フィルタの生成
+            Array.from(universities).sort().forEach(uni => {
+                const option = document.createElement('option');
+                option.value = uni;
+                option.textContent = uni;
+                universityFilter.appendChild(option);
+            });
+            
+            // 科目フィルタの生成
+            Array.from(subjects).sort().forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub;
+                option.textContent = sub;
+                subjectFilter.appendChild(option);
+            });
+        }
+        
+        // フィルタリングと表示の実行
+        function applyFilters() {
+            const search = searchInput.value.toLowerCase();
+            const selectedUni = universityFilter.value;
+            const selectedSub = subjectFilter.value;
+
+            const filtered = wordsData.filter(item => {
+                const universityMatch = selectedUni === '全て' || item.university === selectedUni;
+                const subjectMatch = selectedSub === '全て' || item.subject.toLowerCase().includes(selectedSub.toLowerCase());
+                
+                // 検索（単語、大学、科目、年）
+                const searchMatch = search === '' || 
+                                    item.word.toLowerCase().includes(search) ||
+                                    item.university.toLowerCase().includes(search) ||
+                                    item.subject.toLowerCase().includes(search) ||
+                                    String(item.year).includes(search);
+
+                return universityMatch && subjectMatch && searchMatch;
+            });
+
+            renderList(filtered);
+        }
+
+        // リストの描画
+        function renderList(data) {
+            wordList.innerHTML = ''; // リストをクリア
+            resultCount.textContent = `${data.length} 件の結果`;
+
+            if (data.length === 0) {
+                wordList.innerHTML = '<li>条件に一致する単語は見つかりませんでした。</li>';
+                return;
+            }
+            
+            // 年が新しい順にソート (新しい年が上に来るように)
+            data.sort((a, b) => b.year - a.year); 
+
+            data.forEach(item => {
+                const li = document.createElement('li');
+                
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'word';
+                wordDiv.textContent = item.word;
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'details';
+                
+                // 科目をタグ形式で表示
+                const subjects = item.subject.split(',').map(s => s.trim()).filter(s => s);
+                const subjectTags = subjects.map(s => `<span class="subject-tag">${s}</span>`).join('');
+                
+                detailsDiv.innerHTML = `
+                    <span class="meta-info">${item.university} - ${item.year}年</span>
+                    ${subjectTags}
+                `;
+                
+                li.appendChild(wordDiv);
+                li.appendChild(detailsDiv);
+                wordList.appendChild(li);
+            });
+        }
+
+        // アプリケーションの開始
+        initialize();
+    </script>
+</body>
+</html>
