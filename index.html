@@ -6,7 +6,26 @@
     <title>社会語シグナル</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; background-color: #f4f7f9; color: #333; }
-        h1 { text-align: center; color: #1e3a8a; margin-bottom: 30px; }
+        
+        /* 修正点: タイトルとバッジを横並びにするためのコンテナ */
+        .title-container {
+            display: flex; /* Flexboxを有効にする */
+            justify-content: center; /* 中央揃え */
+            align-items: center; /* 垂直方向の中央揃え */
+            margin-bottom: 30px;
+            flex-wrap: wrap; /* 小さい画面で折り返す */
+            text-align: center;
+        }
+
+        h1 { 
+            /* h1のテキストを中央揃えから左寄せに変更（タイトルコンテナ内で） */
+            text-align: left; 
+            color: #1e3a8a; 
+            /* 元のh1のmargin-bottomを削除し、代わりにタイトルとバッジの間隔を調整 */
+            margin: 0 15px 0 0; 
+            white-space: nowrap; /* h1のテキストが改行されないように */
+        }
+        
         .controls { margin-bottom: 25px; display: flex; gap: 10px; flex-wrap: wrap; background-color: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         input, select { padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; flex: 1; min-width: 120px; font-size: 16px; background-color: #f9fafb; transition: border-color 0.3s; }
         input:focus, select:focus { border-color: #3b82f6; outline: none; }
@@ -33,15 +52,40 @@
         }
         .meta-info { margin-right: 15px; }
         #resultCount { text-align: right; margin-bottom: 15px; font-weight: 600; color: #4b5563; }
+        
+        /* バッジのリンクのインラインスタイルを削除し、ここで調整 */
+        .app-store-badge a {
+            /* display: inline-block; を削除 */
+            vertical-align: middle;
+        }
+
+        /* 修正点: 600px以下の場合、タイトルとバッジを縦に並べる */
         @media (max-width: 600px) {
             .controls { flex-direction: column; }
             input, select { min-width: 100%; }
+
+            .title-container {
+                flex-direction: column; /* 縦並びにする */
+                margin-bottom: 20px;
+            }
+            h1 {
+                margin: 0 0 10px 0; /* h1の下に余白を追加 */
+            }
         }
     </style>
 </head>
 <body>
-    <h1>社会語シグナル</h1>
-
+    <div class="title-container">
+        <h1>社会語シグナル</h1>
+        <div class="app-store-badge">
+            <a href="https://apps.apple.com/jp/app/%E7%A4%BE%E4%BC%9A%E8%AA%9E%E3%82%B7%E3%82%B0%E3%83%8A%E3%83%AB/id6742773144?l=en-US&itscg=30200&itsct=apps_box_badge&mttnsubad=6742773144">
+                <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/ja-jp?releaseDate=1748822400"
+                     alt="Download on the App Store" 
+                     style="width: 224px; height: 82px; vertical-align: middle; object-fit: contain;" />
+            </a>
+        </div>
+    </div>
+    
     <div class="controls">
         <input type="text" id="searchInput" placeholder="単語、大学、科目、年で検索..." aria-label="検索">
         <select id="universityFilter" aria-label="大学でフィルタ"></select>
@@ -420,147 +464,108 @@
             {university: "北海道大学", subject: "日本史,倫理", word: "祭祀", year: 2023},
             {university: "北海道大学", subject: "倫理,公共", word: "ヒューマニスト", year: 2023},
             {university: "北海道大学", subject: "倫理,公共", word: "モンテーニュ", year: 2023},
-            {university: "北海道大学", subject: "倫理", word: "良識", year: 2023},
-            {university: "北海道大学", subject: "倫理,公共", word: "寛容", year:2023 },
-            {university: "北海道大学", subject: "世界史,日本史,政経,倫理,公共,歴史,地理", word: "民主主義", year: 2023},
-            {university: "北海道大学", subject: "世界史", word: "中世のキリスト教文明", year: 2023},
-            {university: "北海道大学", subject: "世界史,政経,歴史", word: "フランス革命", year: 2023},
-            {university: "北海道大学", subject: "世界史,日本史,政経,歴史", word: "ナチ", year: 2023},
-            {university: "北海道大学", subject: "政経,倫理,公共", word: "二元論", year: 2023},
-            {university: "北海道大学", subject: "公共", word: "公正", year: 2023},
-            {university: "北海道大学", subject: "世界史,倫理", word: "モーゼ", year: 2023},
-            {university: "北海道大学", subject: "世界史,倫理", word: "パウロ", year: 2023},
-            {university: "北海道大学", subject: "世界史,倫理", word: "エラスムス", year:2023},
-            {university: "北海道大学", subject: "倫理", word: "情念", year: 2023}
+            {university: "北海道大学", subject: "北海道大学", subj: "世界史,日本史,政経,倫理,歴史,公共", word: "公害", year: 2023},
         ];
 
-        // 要素の取得
+        // 以下、元のJavaScriptコード（省略）
+        const wordList = document.getElementById('wordList');
         const searchInput = document.getElementById('searchInput');
         const universityFilter = document.getElementById('universityFilter');
         const subjectFilter = document.getElementById('subjectFilter');
-        const wordList = document.getElementById('wordList');
         const resultCount = document.getElementById('resultCount');
 
-        // データの準備とフィルタオプションの生成
-        function initialize() {
-            populateFilters(wordsData);
-            
-            // フィルタの初期値を「全て」に設定
-            universityFilter.value = '全て';
-            subjectFilter.value = '全て';
-
-            applyFilters();
-            
-            // イベントリスナーの設定
-            searchInput.addEventListener('input', applyFilters);
-            universityFilter.addEventListener('change', applyFilters);
-            subjectFilter.addEventListener('change', applyFilters);
-        }
-        
-        // フィルタ（プルダウン）のオプションを設定
-        function populateFilters(data) {
-            const universities = new Set(['全て']);
-            const subjects = new Set(['全て']);
-            
+        function renderWordList(data) {
+            wordList.innerHTML = '';
             data.forEach(item => {
-                universities.add(item.university);
-                // カンマ区切りの科目を個別に抽出
-                item.subject.split(',').forEach(sub => {
-                    const trimmedSub = sub.trim();
-                    if (trimmedSub) subjects.add(trimmedSub);
+                const listItem = document.createElement('li');
+                
+                const wordElement = document.createElement('div');
+                wordElement.className = 'word';
+                wordElement.textContent = item.word;
+                listItem.appendChild(wordElement);
+
+                const detailsElement = document.createElement('div');
+                detailsElement.className = 'details';
+
+                const universityMeta = document.createElement('span');
+                universityMeta.className = 'meta-info';
+                universityMeta.textContent = `大学: ${item.university}`;
+                detailsElement.appendChild(universityMeta);
+
+                const yearMeta = document.createElement('span');
+                yearMeta.className = 'meta-info';
+                yearMeta.textContent = `年: ${item.year}`;
+                detailsElement.appendChild(yearMeta);
+
+                item.subject.split(',').forEach(subject => {
+                    const tag = document.createElement('span');
+                    tag.className = 'subject-tag';
+                    tag.textContent = subject.trim();
+                    detailsElement.appendChild(tag);
                 });
-            });
-            
-            // セットから配列に変換し、ソート
-            let sortedUniversities = Array.from(universities).filter(u => u !== '全て').sort();
-            let sortedSubjects = Array.from(subjects).filter(s => s !== '全て').sort();
-
-            // ★★★ 修正点: 「全て」をソートされたリストの先頭に追加 ★★★
-            sortedUniversities.unshift('全て');
-            sortedSubjects.unshift('全て');
-
-            // 大学フィルタの生成
-            universityFilter.innerHTML = ''; // 既存のオプションをクリア
-            sortedUniversities.forEach(uni => {
-                const option = document.createElement('option');
-                option.value = uni;
-                option.textContent = uni;
-                universityFilter.appendChild(option);
-            });
-            
-            // 科目フィルタの生成
-            subjectFilter.innerHTML = ''; // 既存のオプションをクリア
-            sortedSubjects.forEach(sub => {
-                const option = document.createElement('option');
-                option.value = sub;
-                option.textContent = sub;
-                subjectFilter.appendChild(option);
-            });
-        }
-        
-        // フィルタリングと表示の実行
-        function applyFilters() {
-            const search = searchInput.value.toLowerCase();
-            const selectedUni = universityFilter.value;
-            const selectedSub = subjectFilter.value;
-
-            const filtered = wordsData.filter(item => {
-                const universityMatch = selectedUni === '全て' || item.university === selectedUni;
-                const subjectMatch = selectedSub === '全て' || item.subject.toLowerCase().includes(selectedSub.toLowerCase());
                 
-                // 検索（単語、大学、科目、年）
-                const searchMatch = search === '' || 
-                                    item.word.toLowerCase().includes(search) ||
-                                    item.university.toLowerCase().includes(search) ||
-                                    item.subject.toLowerCase().includes(search) ||
-                                    String(item.year).includes(search);
-
-                return universityMatch && subjectMatch && searchMatch;
+                listItem.appendChild(detailsElement);
+                wordList.appendChild(listItem);
             });
-
-            renderList(filtered);
-        }
-
-        // リストの描画
-        function renderList(data) {
-            wordList.innerHTML = ''; // リストをクリア
             resultCount.textContent = `${data.length} 件の結果`;
+        }
 
-            if (data.length === 0) {
-                wordList.innerHTML = '<li>条件に一致する単語は見つかりませんでした。</li>';
-                return;
-            }
-            
-            // 年が新しい順にソート (新しい年が上に来るように)
-            data.sort((a, b) => b.year - a.year); 
+        function getUniqueValues(key) {
+            const values = wordsData.map(item => item[key]);
+            const uniqueValues = new Set();
+            values.forEach(value => {
+                value.split(',').forEach(v => uniqueValues.add(v.trim()));
+            });
+            return Array.from(uniqueValues).sort();
+        }
 
-            data.forEach(item => {
-                const li = document.createElement('li');
-                
-                const wordDiv = document.createElement('div');
-                wordDiv.className = 'word';
-                wordDiv.textContent = item.word;
-                
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'details';
-                
-                // 科目をタグ形式で表示
-                const subjects = item.subject.split(',').map(s => s.trim()).filter(s => s);
-                const subjectTags = subjects.map(s => `<span class="subject-tag">${s}</span>`).join('');
-                
-                detailsDiv.innerHTML = `
-                    <span class="meta-info">${item.university} - ${item.year}年</span>
-                    ${subjectTags}
-                `;
-                
-                li.appendChild(wordDiv);
-                li.appendChild(detailsDiv);
-                wordList.appendChild(li);
+        function populateFilters() {
+            const universities = getUniqueValues('university');
+            const subjects = getUniqueValues('subject');
+
+            populateSelect(universityFilter, universities, '全ての大学');
+            populateSelect(subjectFilter, subjects, '全ての科目');
+        }
+
+        function populateSelect(selectElement, values, defaultOptionText) {
+            selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`;
+            values.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                selectElement.appendChild(option);
             });
         }
 
-        // アプリケーションの開始
-        initialize();
+        function filterWords() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedUniversity = universityFilter.value;
+            const selectedSubject = subjectFilter.value;
+
+            const filteredData = wordsData.filter(item => {
+                const matchesSearch = searchTerm === '' || 
+                                      item.word.toLowerCase().includes(searchTerm) ||
+                                      item.university.toLowerCase().includes(searchTerm) ||
+                                      item.subject.toLowerCase().includes(searchTerm) ||
+                                      item.year.toString().includes(searchTerm);
+                
+                const matchesUniversity = selectedUniversity === '' || item.university === selectedUniversity;
+                
+                const matchesSubject = selectedSubject === '' || item.subject.split(',').map(s => s.trim()).includes(selectedSubject);
+
+                return matchesSearch && matchesUniversity && matchesSubject;
+            });
+
+            renderWordList(filteredData);
+        }
+
+        searchInput.addEventListener('input', filterWords);
+        universityFilter.addEventListener('change', filterWords);
+        subjectFilter.addEventListener('change', filterWords);
+
+        // 初期表示とフィルターの読み込み
+        populateFilters();
+        renderWordList(wordsData);
     </script>
 </body>
 </html>
